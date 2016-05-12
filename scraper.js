@@ -54,12 +54,11 @@ function prefetch() {
 	request('https://www.video2brain.com/de/login', function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			$ = cheerio.load(body);
-			var head = $('head').html();
-			var startPos = head.indexOf('ajtok');
-			var endPos = head.indexOf('=";');
+			var html = $('body').html();
+			var startPos = html.indexOf('ajftok');
+			var endPos = html.indexOf('=";');
 
-			TOKEN = head.slice(startPos + 9, endPos + 1);
-			console.log(TOKEN);
+			TOKEN = html.slice(startPos + 10, endPos + 1);
 
 			emitter.emit('start');
 		}
@@ -72,7 +71,7 @@ function authenticate() {
 		method: 'POST',
 		form: {
 			email: USERNAME,
-			PASSWORD: PASSWORD,
+			password: PASSWORD,
 			set_cookie: true,
 			token: TOKEN
 		}
