@@ -88,6 +88,13 @@ function loadPage() {
 	request(DOWNLOAD_URL, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			$ = cheerio.load(body);
+
+			var html = $('head').html();
+			var startPos = html.indexOf('ajtok');
+			var endPos = html.indexOf('=";');
+
+			TOKEN = html.slice(startPos + 9, endPos + 1);
+
 			emitter.emit('loadPage');
 		}
 	});
@@ -154,7 +161,8 @@ function getSecureToken(metaLink, videoLink) {
 					expire: '1',
 					path: videoLink,
 					access_exp: accessExp,
-					access_hash: accessHash
+					access_hash: accessHash,
+					token: TOKEN
 				}
 			};
 
@@ -176,7 +184,8 @@ function download(fileUrl) {
 
 
 	var child = exec(mkdir, function(err, stdout, stderr) {
-		request(fileUrl, function() {
+		request(fileUrl, function(error, response, body) {
+			//console.log(body);
 			emitter.emit('downloadEnd');
 		}).pipe(fs.createWriteStream(DOWNLOAD_DIR + dirName + '/' + fileName));
 	});
