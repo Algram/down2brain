@@ -6,6 +6,7 @@ var request = require('request');
 var cheerio = require('cheerio'), $;
 var events = require('events');
 var config = require('./config.json');
+var async = require('async');
 
 //Global fields
 var USERNAME = config.username;
@@ -114,20 +115,36 @@ function extractLinks() {
 		}
 	});
 
-	for (var link in $linksClean) {
-		request($linksClean[link], function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				//Put the dom into cheerio for further processing
-				var $ = cheerio.load(body);
+	console.log('EXTRACTED LINKS', $linksClean.length);
 
-					var $videoLink = $('body').find('#html5_player').attr('src');
+	var interval = 1 * 1000; // 1 second;
 
-					if (typeof $videoLink != 'undefined') {
-						emitter.emit('extractLinks', $linksClean[link], $videoLink);
-					}
-			}
-		});
-	}
+	async.forEachOf($linksClean, function(link, i, callback) {
+		setTimeout( function (i) {
+			request(link, function (error, response, body) {
+				if (!error && response.statusCode == 200) {
+					//Put the dom into cheerio for further processing
+					var $ = cheerio.load(body);
+
+						var $videoLink = $('body').find('#html5_player').attr('src');
+
+						if (typeof $videoLink != 'undefined') {
+							emitter.emit('extractLinks', link, $videoLink);
+						}
+					callback();
+				}
+			});
+		}, interval * i, i);
+	}, function(err){
+	    // if any of the file processing produced an error, err would equal that error
+	    if( err ) {
+	      // One of the iterations produced an error.
+	      // All processing will now stop.
+	      console.log('A file failed to process');
+	    } else {
+	      console.log('All files have been processed successfully');
+	    }
+	});
 }
 
 function getSecureToken(metaLink, videoLink) {
@@ -185,7 +202,6 @@ function download(fileUrl) {
 
 	var child = exec(mkdir, function(err, stdout, stderr) {
 		request(fileUrl, function(error, response, body) {
-			//console.log(body);
 			emitter.emit('downloadEnd');
 		}).pipe(fs.createWriteStream(DOWNLOAD_DIR + dirName + '/' + fileName));
 	});
