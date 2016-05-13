@@ -1,0 +1,6 @@
+{
+    "username" : "EMAIL",
+    "password" : "PASSWORD",
+    "download_dir" : "./downloads/",
+    "download_url" : ""
+}
